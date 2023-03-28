@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.distributions import Categorical
 
 #Hyperparameters
-learning_rate = 0.0002
+learning_rate = 0.0002 # lr 키우면 update 너무 커서 안될수도
 gamma         = 0.98
 
 class Policy(nn.Module):
@@ -34,8 +34,7 @@ class Policy(nn.Module):
             loss = -torch.log(prob) * R # for grad ascent, apply minus
             loss.backward() # grad descent
             # gd on (- log(pi(a_t|s_t))*G_t)
-        # if we want to gradient ascent on just one big sigma, we can adjust here differently
-        self.optimizer.step()
+        self.optimizer.step() # update parameter based on stored on gradient
         self.data = [] # empty current trajectory's data for next trajectory
 
 def main():
@@ -47,12 +46,12 @@ def main():
     
     for n_epi in range(10000):
         s = env.reset() # observation space = (4,)
-        env.render()
+        #env.render()
         s = s[0]
         ## print(s)
         done = False
         
-        while not done: # CartPole-v1 forced to terminates at 500 step.
+        while not done: # fyi, CartPole-v1 forced to terminates at 500 step. -> so max 500
             prob = pi(torch.from_numpy(s).float())
             ## print(prob)
             m = Categorical(prob) # action space = discrete(2)
@@ -76,7 +75,7 @@ def main():
         
         ##print(done)
         # 현재 policy로 진행한 trajectory에 대해 policy update!
-        # seems this is not REINFORCE version of updating every timestep..? -> no! (in train_net function)
+        # this is not REINFORCE version of updating every timestep
         pi.train_net()
         
         if n_epi%print_interval==0 and n_epi!=0:
